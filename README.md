@@ -39,16 +39,20 @@ The RC522 runs on **3.3 V only**; connecting it to 5 V destroys it.
 
 | Part | Pin | ESP32 |
 |------|-----|-------|
-| RC522 | 3.3V | 3V3 |
+| RC522 | SDA | GPIO 16 |
+| RC522 | SCK | GPIO 17 |
+| RC522 | MOSI | GPIO 5 |
+| RC522 | MISO | GPIO 18 |
+| RC522 | IRQ | not connected (or GPIO 19, unused) |
 | RC522 | GND | GND |
-| RC522 | SDA | GPIO 5 |
-| RC522 | SCK | GPIO 18 |
-| RC522 | MOSI | GPIO 23 |
-| RC522 | MISO | GPIO 19 |
 | RC522 | RST | GPIO 22 |
-| RC522 | IRQ | not connected |
+| RC522 | 3.3V | 3V3 |
 | Buzzer (optional) | + | GPIO 25 |
 | Buzzer (optional) | − | GND |
+
+The RC522's header lines up 1:1 with the DevKit row `16 17 5 18 19 21 22 23`,
+except GND and 3.3V, which go to the ESP32's GND and 3V3 pins. GPIO 19, 21 and 23
+are deliberately left unused. Details in [docs/wiring.md](docs/wiring.md).
 
 - The buzzer must be an **active** 3.3 V buzzer (beeps when DC is applied); a
   passive one only clicks. It is enabled by default; GPIO 25 with nothing attached

@@ -2,18 +2,21 @@
 // Every pin can be overridden from platformio.ini build_flags, e.g. -DPIN_BUZZER=-1.
 #pragma once
 
-// RC522 on the VSPI bus
+// RC522 on the VSPI bus, routed through the GPIO matrix.
+// Chosen so the RC522's header (SDA SCK MOSI MISO IRQ GND RST 3.3V) lines up
+// 1:1 with the DevKit row 16 17 5 18 19 21 22 23. GPIO 19, 21 and 23 sit under
+// IRQ, GND and 3.3V and must stay unused: the firmware never drives them.
 #ifndef PIN_RC522_SS
-#define PIN_RC522_SS 5    // RC522 "SDA"
+#define PIN_RC522_SS 16    // RC522 "SDA"
 #endif
 #ifndef PIN_RC522_SCK
-#define PIN_RC522_SCK 18
+#define PIN_RC522_SCK 17
 #endif
 #ifndef PIN_RC522_MOSI
-#define PIN_RC522_MOSI 23
+#define PIN_RC522_MOSI 5
 #endif
 #ifndef PIN_RC522_MISO
-#define PIN_RC522_MISO 19
+#define PIN_RC522_MISO 18
 #endif
 #ifndef PIN_RC522_RST
 #define PIN_RC522_RST 22
