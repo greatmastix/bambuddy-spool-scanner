@@ -6,6 +6,7 @@
 #include <WiFiManager.h>
 
 #include "feedback.h"
+#include "status.h"
 
 namespace settings {
 
@@ -19,11 +20,13 @@ const char* const HOSTNAME = "spool-scanner";
 const uint32_t IMPROV_CONNECT_TIMEOUT_MS = 20000;
 
 WiFiManager wm;
+WiFiManagerParameter statusWidget(status::STATUS_WIDGET_HTML);
 WiFiManagerParameter urlParam("url", "Bambuddy URL (e.g. http://192.168.1.50:8000)", "", 128);
 WiFiManagerParameter keyParam("apikey", "Bambuddy API key (needs Manage inventory)", "", 96);
 WiFiManagerParameter locParam("location", "Storage location for new spools (optional)", "", 64);
 ImprovWiFi improv(&Serial);
 bool announcedIp = false;
+const char* firmware = "";
 
 String normalizeUrl(String url) {
   url.trim();
@@ -48,6 +51,15 @@ void saveParams() {
   prefs.putString("location", current.storageLocation);
   prefs.end();
   Serial.printf("Settings saved, Bambuddy: %s\n", current.bambuddyUrl.c_str());
+  status::requestCheck();
+}
+
+void addStatusRoute() {
+  wm.server->on("/status.json", HTTP_GET, []() {
+    if (wm.server->hasArg("refresh")) status::requestCheck();
+    wm.server->sendHeader("Cache-Control", "no-store");
+    wm.server->send(200, "application/json", status::json(firmware));
+  });
 }
 
 // Called by Improv with the WiFi the user entered in the web installer.
@@ -68,6 +80,7 @@ void improvConnected(const char* ssid, const char*) {
 }  // namespace
 
 void begin(const char* firmwareVersion) {
+  firmware = firmwareVersion;
   Preferences prefs;
   prefs.begin(NVS_NAMESPACE, true);
   current.bambuddyUrl = prefs.getString("url", "");
@@ -87,11 +100,14 @@ void begin(const char* firmwareVersion) {
   WiFi.mode(WIFI_STA);
   wm.setHostname(HOSTNAME);
   wm.setTitle("Spool Scanner");
+  wm.addParameter(&statusWidget);
   wm.addParameter(&urlParam);
   wm.addParameter(&keyParam);
   wm.addParameter(&locParam);
   wm.setSaveParamsCallback(saveParams);
-  std::vector<const char*> menu = {"param", "wifi", "info", "restart"};
+  wm.setWebServerCallback(addStatusRoute);
+  wm.setCustomMenuHTML(status::STATUS_WIDGET_HTML);
+  std::vector<const char*> menu = {"custom", "param", "wifi", "info", "restart"};
   wm.setMenu(menu);
   wm.setConfigPortalBlocking(false);
   wm.setConfigPortalTimeout(0);

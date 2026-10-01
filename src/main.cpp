@@ -9,6 +9,7 @@
 #include "feedback.h"
 #include "pins.h"
 #include "settings.h"
+#include "status.h"
 #include "tag_reader.h"
 
 namespace {
@@ -48,34 +49,43 @@ void checkSetupButton() {
 
 void handleTag(const bambu::TagData& tag) {
   const bambu::SpoolInfo spool = bambu::toSpoolInfo(tag);
-  if (spool.trayUuid == lastTrayUuid && millis() - lastSpoolAt < SAME_SPOOL_COOLDOWN_MS) return;
+  if (spool.trayUuid == lastTrayUuid && millis() - lastSpoolAt < SAME_SPOOL_COOLDOWN_MS) {
+    feedback::done();
+    return;
+  }
   lastTrayUuid = spool.trayUuid;
   lastSpoolAt = millis();
 
   logSpool(tag, spool);
-  feedback::busy(true);
+  const String name = String(spool.material.c_str()) + " " + spool.subtype.c_str() + " #" +
+                      spool.rgba.substr(0, 6).c_str();
 
   if (!settings::wifiConnected()) {
     Serial.println("Not on WiFi yet, can't reach Bambuddy");
-    feedback::busy(false);
+    status::reportScan(name + ": not on WiFi");
     feedback::error();
     lastTrayUuid.clear();
     return;
   }
 
   const bambuddy::Outcome outcome = bambuddy::addSpool(spool);
-  feedback::busy(false);
   switch (outcome.result) {
     case bambuddy::Result::Created:
       Serial.printf("Bambuddy: created spool #%d\n", outcome.spoolId);
+      status::reportApi(status::Api::Connected, "connected");
+      status::reportScan(name + ": added as spool #" + outcome.spoolId);
       feedback::added();
       break;
     case bambuddy::Result::AlreadyExists:
       Serial.printf("Bambuddy: spool #%d already in inventory\n", outcome.spoolId);
+      status::reportApi(status::Api::Connected, "connected");
+      status::reportScan(name + ": already in Bambuddy as spool #" + outcome.spoolId);
       feedback::alreadyKnown();
       break;
     case bambuddy::Result::Error:
       Serial.printf("Bambuddy: %s\n", outcome.message.c_str());
+      status::reportScan(name + ": " + outcome.message);
+      status::requestCheck();
       feedback::error();
       // Let the next read retry straight away.
       lastTrayUuid.clear();
@@ -105,13 +115,20 @@ void setup() {
 
 void loop() {
   settings::loop();
+  status::loop();
   checkSetupButton();
 
   bambu::TagData tag;
   const tag_reader::ReadResult r = tag_reader::poll(tag);
   if (r == tag_reader::ReadResult::Ok) {
     handleTag(tag);
+  } else if (r == tag_reader::ReadResult::NotBambu) {
+    feedback::done();
+    Serial.printf("Tag: %s\n", tag_reader::describe(r));
   } else if (r != tag_reader::ReadResult::NoTag) {
+    // Detected but lost mid-read: tell the user to hold still and try again.
+    feedback::tagLost();
+    status::reportScan(String("read interrupted: ") + tag_reader::describe(r));
     Serial.printf("Tag: %s\n", tag_reader::describe(r));
   }
   delay(50);

@@ -30,10 +30,38 @@ void begin() {
   set(false);
 }
 
-void busy(bool on) { digitalWrite(PIN_LED, on ? HIGH : LOW); }
-void added() { blink(1, 800, 200); }
-void alreadyKnown() { blink(2, 120, 150); }
-void error() { blink(5, 60, 80); }
+void reading() {
+  digitalWrite(PIN_LED, HIGH);
+  if (PIN_BUZZER >= 0) {
+    digitalWrite(PIN_BUZZER, HIGH);
+    delay(30);
+    digitalWrite(PIN_BUZZER, LOW);
+  }
+}
+
+void done() { set(false); }
+
+void tagLost() {
+  set(false);
+  delay(150);
+  blink(3, 80, 80);
+}
+
+void added() {
+  set(false);
+  delay(150);
+  blink(1, 800, 200);
+}
+void alreadyKnown() {
+  set(false);
+  delay(150);
+  blink(2, 120, 150);
+}
+void error() {
+  set(false);
+  delay(150);
+  blink(5, 60, 80);
+}
 void portal() { blink(3, 300, 300); }
 
 }  // namespace feedback

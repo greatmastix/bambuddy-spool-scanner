@@ -14,6 +14,7 @@ namespace bambuddy {
 namespace {
 
 const uint32_t HTTP_TIMEOUT_MS = 8000;
+const uint32_t PING_TIMEOUT_MS = 3000;
 
 String urlEncode(const String& s) {
   static const char hex[] = "0123456789ABCDEF";
@@ -32,7 +33,8 @@ String urlEncode(const String& s) {
 }
 
 // Sends one request. Returns the HTTP status (negative on transport errors).
-int request(const char* method, const String& path, const String& body, String& response) {
+int request(const char* method, const String& path, const String& body, String& response,
+            uint32_t timeoutMs = HTTP_TIMEOUT_MS) {
   const String url = settings::current.bambuddyUrl + "/api/v1" + path;
 
   std::unique_ptr<WiFiClient> client;
@@ -46,7 +48,8 @@ int request(const char* method, const String& path, const String& body, String& 
   }
 
   HTTPClient http;
-  http.setTimeout(HTTP_TIMEOUT_MS);
+  http.setTimeout(timeoutMs);
+  http.setConnectTimeout(timeoutMs);
   if (!http.begin(*client, url)) return -1;
   http.addHeader("Accept", "application/json");
   if (settings::current.apiKey.length()) http.addHeader("X-API-Key", settings::current.apiKey);
@@ -130,6 +133,26 @@ Outcome addSpool(const bambu::SpoolInfo& spool) {
     return {Result::Created, spoolIdFrom(response), "created"};
   }
   return {Result::Error, -1, "create failed: HTTP " + String(status) + " " + response};
+}
+
+int ping(String& detail) {
+  if (settings::current.bambuddyUrl.isEmpty()) {
+    detail = "not configured";
+    return 0;
+  }
+  String response;
+  const int status = request("GET", "/inventory/spools/by-tag?tray_uuid=00000000000000000000000000000000",
+                             "", response, PING_TIMEOUT_MS);
+  if (status == 404 || status == 200) {
+    detail = "connected";
+  } else if (status == 401 || status == 403) {
+    detail = "API key rejected (HTTP " + String(status) + ")";
+  } else if (status < 0) {
+    detail = "unreachable (" + response + ")";
+  } else {
+    detail = "unexpected answer (HTTP " + String(status) + ")";
+  }
+  return status;
 }
 
 }  // namespace bambuddy

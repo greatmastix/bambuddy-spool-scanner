@@ -128,11 +128,20 @@ for example to change WiFi.
 
 | LED / buzzer | Meaning |
 |--------------|---------|
-| on | reading the tag and talking to Bambuddy |
+| LED on + short chirp | tag detected, reading: **hold still** until the result |
 | one long blink | spool added to Bambuddy |
 | two short blinks | spool is already in Bambuddy |
-| five fast blinks | error (see the serial log at 115200 baud) |
-| three slow blinks | setup portal open |
+| three quick blinks | tag moved away mid-read: hold it still and try again |
+| five fast blinks | error, e.g. Bambuddy unreachable (see the status page) |
+| three slow blinks | setup access point open |
+
+If the tag slips out of range during a read, the scanner re-selects it and retries a
+few times before giving up, so a slight wobble usually doesn't matter.
+
+The scanner's web page (`http://<scanner-ip>/`, also shown on the settings page)
+shows whether Bambuddy is connected and accepts the API key, whether the RC522
+responds, and the last scan. The Bambuddy check runs every minute, after saving the
+settings, and when you click **check now**.
 
 The serial log shows every scan, for example:
 

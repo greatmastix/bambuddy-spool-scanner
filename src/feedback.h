@@ -4,7 +4,9 @@
 namespace feedback {
 
 void begin();
-void busy(bool on);   // LED on while a tag is being processed
+void reading();       // tag detected: LED on + short chirp, "hold still"
+void done();          // LED off without a pattern
+void tagLost();       // three quick blinks: tag moved away mid-read, hold it still and retry
 void added();         // one long blink: new spool created
 void alreadyKnown();  // two short blinks: spool is already in Bambuddy
 void error();         // five fast blinks: read or network error
