@@ -18,7 +18,7 @@ Optional:
 | Part | ESP32 pin | Notes |
 |------|-----------|-------|
 | Status LED | GPIO 2 | on-board blue LED on most DevKits, nothing to wire |
-| Active piezo buzzer (+) | GPIO 25 | build with `-DPIN_BUZZER=25`; buzzer (-) to GND |
+| Active 3.3 V piezo buzzer (+) | GPIO 25 | enabled by default; buzzer (-) to GND. Must be an *active* buzzer (beeps on DC) |
 | Setup button | GPIO 0 | the DevKit's BOOT button, nothing to wire |
 
 All pins can be changed in `src/pins.h` or via `build_flags` in `platformio.ini`.
@@ -33,8 +33,12 @@ All pins can be changed in `src/pins.h` or via `build_flags` in `platformio.ini`
  │  GPIO 23 ├───────────────┤ MOSI   │
  │  GPIO 19 ├───────────────┤ MISO   │
  │  GPIO 22 ├───────────────┤ RST    │
- └──────────┘               │ IRQ  x │
-                            └────────┘
+ │          │               │ IRQ  x │
+ │          │               └────────┘
+ │          │               active buzzer (optional)
+ │  GPIO 25 ├───────────────(+)
+ │      GND ├───────────────(-)
+ └──────────┘
 ```
 
 ## Mounting for reading through the box
