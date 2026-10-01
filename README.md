@@ -87,6 +87,14 @@ Open **https://greatmastix.github.io/bambuddy-spool-scanner/** in Chrome or Edge
 plug in the ESP32 and click **Connect**. The page is built from `main` by the
 `web flasher` workflow using [ESP Web Tools](https://esphome.github.io/esp-web-tools/).
 
+## Updating
+
+The scanner checks GitHub Pages for a newer firmware at boot and every 6 hours. When
+one is available, its web page (`http://<scanner-ip>/`) shows **update … available,
+install**. Click it and the scanner downloads the new firmware over HTTPS, verifies it
+(MD5 from `ota.json`) and restarts. Settings are kept. Every push to `main` publishes
+a new version. The **Update** menu entry still lets you upload a `.bin` by hand.
+
 ## Build and flash
 
 With [PlatformIO](https://platformio.org/):

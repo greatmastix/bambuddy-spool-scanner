@@ -4,6 +4,7 @@
 #include <WiFi.h>
 
 #include "bambuddy_client.h"
+#include "ota.h"
 #include "settings.h"
 #include "tag_reader.h"
 
@@ -96,6 +97,14 @@ String json(const char* firmwareVersion) {
   w["rssi"] = WiFi.RSSI();
   w["ip"] = WiFi.localIP().toString();
   doc["firmware"] = firmwareVersion;
+  String otaState, otaLatest, otaDetail;
+  int otaPct = 0;
+  ota::describe(otaState, otaLatest, otaPct, otaDetail);
+  JsonObject u = doc["update"].to<JsonObject>();
+  u["state"] = otaState;
+  u["latest"] = otaLatest;
+  u["progress"] = otaPct;
+  u["detail"] = otaDetail;
   doc["uptime_s"] = now / 1000;
   String out;
   serializeJson(doc, out);
@@ -110,6 +119,15 @@ var C={connected:['#1a9e4b','Connected'],auth_failed:['#d33','API key rejected']
 function ago(s){return s==null?'':(s<60?s+' s':Math.floor(s/60)+' min')+' ago'}
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return'&#'+c.charCodeAt(0)+';'})}
 function dot(c){return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+c+';margin-right:6px"></span>'}
+function post(u){fetch(u,{method:'POST'}).then(function(){setTimeout(function(){load(0)},500)})}
+function upd(u){
+if(u.state=='available')return '&mdash; update <b>'+esc(u.latest)+'</b> available <a href="#" id="sstu">install</a>';
+if(u.state=='installing')return '&mdash; installing '+esc(u.latest)+': '+u.progress+'%';
+if(u.state=='done')return '&mdash; '+esc(u.detail);
+if(u.state=='checking')return '&mdash; checking for updates&hellip;';
+if(u.state=='up_to_date')return '&mdash; up to date <a href="#" id="sstc">check again</a>';
+if(u.state=='failed')return '&mdash; <span style="color:#d33">'+esc(u.detail)+'</span> '+(u.latest&&u.latest!=''?'<a href="#" id="sstu">retry install</a> ':'')+'<a href="#" id="sstc">check again</a>';
+return '<a href="#" id="sstc">check for updates</a>'}
 function load(r){fetch('/status.json'+(r?'?refresh=1':'')).then(function(x){return x.json()}).then(function(s){
 var b=s.bambuddy,c=C[b.state]||C.error;
 document.getElementById('sst').innerHTML=
@@ -119,8 +137,11 @@ document.getElementById('sst').innerHTML=
 '<small>'+(b.url?esc(b.url):'no URL set')+(b.api_key_set?', API key set':', no API key')+'</small><br>'+
 '<b>Reader</b>: '+dot(s.reader_ok?'#1a9e4b':'#d33')+(s.reader_ok?'RC522 OK':'RC522 not responding, check wiring')+'<br>'+
 '<b>Last scan</b>: '+esc(s.last_scan.text)+(s.last_scan.s_ago!=null?' <small>('+ago(s.last_scan.s_ago)+')</small>':'')+'<br>'+
-'<small>WiFi '+esc(s.wifi.ssid)+' ('+s.wifi.rssi+' dBm), firmware '+esc(s.firmware)+'</small>';
+'<b>Firmware</b>: '+esc(s.firmware)+' '+upd(s.update)+'<br>'+
+'<small>WiFi '+esc(s.wifi.ssid)+' ('+s.wifi.rssi+' dBm)</small>';
 document.getElementById('sstr').onclick=function(e){e.preventDefault();load(1)};
+var bi=document.getElementById('sstu');if(bi)bi.onclick=function(e){e.preventDefault();if(confirm('Install firmware '+s.update.latest+'? The scanner restarts when done.'))post('/ota/install')};
+var bc=document.getElementById('sstc');if(bc)bc.onclick=function(e){e.preventDefault();post('/ota/check')};
 }).catch(function(){})}
 load(0);setInterval(function(){load(0)},3000);
 })();

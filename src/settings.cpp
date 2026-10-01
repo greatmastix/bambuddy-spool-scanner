@@ -6,6 +6,7 @@
 #include <WiFiManager.h>
 
 #include "feedback.h"
+#include "ota.h"
 #include "status.h"
 
 namespace settings {
@@ -60,6 +61,14 @@ void addStatusRoute() {
     wm.server->sendHeader("Cache-Control", "no-store");
     wm.server->send(200, "application/json", status::json(firmware));
   });
+  wm.server->on("/ota/check", HTTP_POST, []() {
+    ota::requestCheck();
+    wm.server->send(202, "application/json", "{}");
+  });
+  wm.server->on("/ota/install", HTTP_POST, []() {
+    const bool started = ota::startInstall();
+    wm.server->send(started ? 202 : 409, "application/json", "{}");
+  });
 }
 
 // Called by Improv with the WiFi the user entered in the web installer.
@@ -107,7 +116,7 @@ void begin(const char* firmwareVersion) {
   wm.setSaveParamsCallback(saveParams);
   wm.setWebServerCallback(addStatusRoute);
   wm.setCustomMenuHTML(status::STATUS_WIDGET_HTML);
-  std::vector<const char*> menu = {"custom", "param", "wifi", "info", "restart"};
+  std::vector<const char*> menu = {"custom", "param", "wifi", "info", "update", "restart"};
   wm.setMenu(menu);
   wm.setConfigPortalBlocking(false);
   wm.setConfigPortalTimeout(0);

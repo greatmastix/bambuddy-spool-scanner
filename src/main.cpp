@@ -7,6 +7,7 @@
 
 #include "bambuddy_client.h"
 #include "feedback.h"
+#include "ota.h"
 #include "pins.h"
 #include "settings.h"
 #include "status.h"
@@ -105,6 +106,7 @@ void setup() {
 
   Serial.printf("Firmware %s\n", FIRMWARE_VERSION);
   settings::begin(FIRMWARE_VERSION);
+  ota::begin(FIRMWARE_VERSION);
 
   if (!tag_reader::begin()) {
     Serial.println("RC522 not responding, check wiring (see docs/wiring.md)");
@@ -116,6 +118,7 @@ void setup() {
 void loop() {
   settings::loop();
   status::loop();
+  ota::loop();
   checkSetupButton();
 
   bambu::TagData tag;

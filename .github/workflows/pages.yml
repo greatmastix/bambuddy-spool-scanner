@@ -43,9 +43,26 @@ jobs:
             0x8000 $B/partitions.bin \
             0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
             0x10000 $B/firmware.bin
+      - name: Check the scanner trusts the Pages certificate
+        run: |
+          sed -n '/R"PEM(/,/)PEM"/p' src/ota_roots.h > /tmp/roots.pem
+          echo | openssl s_client -connect greatmastix.github.io:443 -servername greatmastix.github.io \
+            -CAfile /tmp/roots.pem -verify_return_error > /tmp/tls.txt 2>&1 \
+            || { cat /tmp/tls.txt; echo "::error::github.io no longer chains to a root in src/ota_roots.h"; exit 1; }
+          grep -E "^depth|Verify return" /tmp/tls.txt
       - name: Assemble site
         run: |
           cp web/index.html site/
+          cp .pio/build/esp32dev/firmware.bin site/firmware/app.bin
+          cat > site/ota.json <<JSON
+          {
+            "version": "$VERSION",
+            "path": "firmware/app.bin",
+            "size": $(stat -c %s site/firmware/app.bin),
+            "md5": "$(md5sum site/firmware/app.bin | cut -d' ' -f1)"
+          }
+          JSON
+          cat site/ota.json
           cat > site/manifest.json <<JSON
           {
             "name": "Bambuddy Spool Scanner",
