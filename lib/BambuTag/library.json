@@ -1,0 +1,7 @@
+{
+  "name": "BambuTag",
+  "version": "0.1.0",
+  "description": "Key derivation and decoding for Bambu Lab filament spool RFID tags (MIFARE Classic 1K). Platform independent.",
+  "frameworks": "*",
+  "platforms": "*"
+}
