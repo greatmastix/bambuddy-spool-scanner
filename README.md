@@ -54,6 +54,12 @@ module (noticeably more range; it is what Bambuddy's own
 [SpoolBuddy](https://github.com/maziggy/bambuddy/tree/main/spoolbuddy) station uses).
 A PN532 is not worth swapping to: its range is about the same as the RC522's.
 
+## Flash from the browser
+
+Open **https://greatmastix.github.io/bambuddy-spool-scanner/** in Chrome or Edge,
+plug in the ESP32 and click **Connect**. The page is built from `main` by the
+`web flasher` workflow using [ESP Web Tools](https://esphome.github.io/esp-web-tools/).
+
 ## Build and flash
 
 With [PlatformIO](https://platformio.org/):
@@ -127,6 +133,7 @@ lib/BambuTag/   key derivation (HKDF-SHA256) and tag decoding, no Arduino depend
 src/            firmware: RC522 reader, Bambuddy client, WiFi setup portal, LED feedback
 test/           host-side tests against real tag dumps
 docs/           wiring
+web/            browser flasher page (published to GitHub Pages)
 ```
 
 ## Credits

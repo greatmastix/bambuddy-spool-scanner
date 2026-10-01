@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bambuddy Spool Scanner</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root { --bg: #f7f7f5; --fg: #1d1d1b; --muted: #5f5f5a; --card: #fff; --line: #e2e2dc; --accent: #00ae42; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #161615; --fg: #ececea; --muted: #a3a39d; --card: #1f1f1d; --line: #33332f; --accent: #2bd36a; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; }
+    h1 { font-size: 1.9rem; margin: 0 0 8px; }
+    h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+    p.lead { color: var(--muted); margin: 0 0 28px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+    esp-web-install-button { --esp-tools-button-color: var(--accent); --esp-tools-button-text-color: #fff; --esp-tools-button-border-radius: 8px; }
+    .unsupported { color: #c0392b; }
+    ol { padding-left: 1.3em; }
+    li { margin: 4px 0; }
+    code { background: var(--line); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+    a { color: var(--accent); }
+    footer { margin-top: 40px; color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Bambuddy Spool Scanner</h1>
+  <p class="lead">Flash the ESP32 + RC522 spool scanner straight from your browser. Hold a Bambu Lab spool, or its unopened box, over the reader and it lands in your Bambuddy inventory.</p>
+
+  <div class="card">
+    <esp-web-install-button manifest="manifest.json">
+      <span slot="unsupported" class="unsupported">Your browser can't flash devices. Use Chrome or Edge on a desktop computer.</span>
+      <span slot="not-allowed" class="unsupported">Flashing needs a secure (https) page.</span>
+    </esp-web-install-button>
+    <p style="margin:12px 0 0;color:var(--muted)">Firmware <code id="version">…</code></p>
+  </div>
+
+  <h2>1. Connect</h2>
+  <ol>
+    <li>Wire the RC522 to the ESP32 as shown in the <a href="https://github.com/greatmastix/bambuddy-spool-scanner/blob/main/docs/wiring.md">wiring guide</a>.</li>
+    <li>Plug the ESP32 into this computer with a USB data cable.</li>
+    <li>Click <strong>Connect</strong> above and pick the ESP32's serial port. If none shows up, install the CP210x or CH340 USB driver for your board.</li>
+  </ol>
+
+  <h2>2. Set up</h2>
+  <ol>
+    <li>In Bambuddy, create an API key with the <strong>Manage inventory</strong> permission.</li>
+    <li>After flashing, join the WiFi network <code>SpoolScanner-Setup</code> with your phone.</li>
+    <li>Pick your WiFi and enter the Bambuddy URL (e.g. <code>http://192.168.1.50:8000</code>) and the API key.</li>
+    <li>To change settings later, hold the BOOT button for 3 seconds.</li>
+  </ol>
+
+  <h2>3. Scan</h2>
+  <p>One long blink: spool added. Two short blinks: already in Bambuddy. Five fast blinks: error (see the serial log).</p>
+
+  <footer>Source and docs on <a href="https://github.com/greatmastix/bambuddy-spool-scanner">GitHub</a>.</footer>
+</main>
+<script>
+  fetch("manifest.json").then(r => r.json()).then(m => {
+    document.getElementById("version").textContent = m.version;
+  }).catch(() => {});
+</script>
+</body>
+</html>
