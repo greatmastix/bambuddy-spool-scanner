@@ -107,17 +107,22 @@ pio test -e native
 1. In Bambuddy, create an API key under **Settings → API Keys** with the
    **Manage inventory** permission. (If Bambuddy has authentication turned off, you
    can leave the key empty.)
-2. Power the scanner. On first boot it opens a WiFi access point called
-   **SpoolScanner-Setup**. Join it; the setup page opens (or browse to
-   `192.168.4.1`).
-3. Pick your WiFi and fill in:
+2. Flash with the [web installer](https://greatmastix.github.io/bambuddy-spool-scanner/).
+   When flashing finishes it asks for your WiFi (via
+   [Improv Wi-Fi](https://www.improv-wifi.com/), the same way WLED does it).
+3. Click **Visit device**. The scanner's settings page opens at
+   `http://<scanner-ip>/param`. Fill in:
    - **Bambuddy URL**, e.g. `http://192.168.1.50:8000`
    - **API key**
    - **Storage location** (optional, written to every new spool)
-4. Save. The scanner joins your WiFi and is ready.
+4. Save. The scanner is ready.
 
-To change the settings later, hold the **BOOT** button for 3 seconds while the
-scanner is running; the setup portal opens again.
+The settings page stays available at `http://<scanner-ip>/param`.
+
+Without the web installer: when the scanner has no working WiFi it opens an access
+point called **SpoolScanner-Setup**. Join it and the same setup page opens (or browse
+to `192.168.4.1`). Holding the **BOOT** button for 3 seconds reopens that access point,
+for example to change WiFi.
 
 ## Using it
 

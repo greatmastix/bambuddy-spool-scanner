@@ -27,7 +27,12 @@ jobs:
           path: ~/.platformio
           key: pio-${{ hashFiles('platformio.ini') }}
       - run: pip install platformio "esptool==4.8.1"
-      - run: pio run -e esp32dev
+      - name: Version
+        run: echo "VERSION=$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+      - name: Build firmware
+        env:
+          PLATFORMIO_BUILD_FLAGS: -DFIRMWARE_VERSION=\"${{ env.VERSION }}\"
+        run: pio run -e esp32dev
       - name: Merge bootloader, partitions and app into one image
         run: |
           B=.pio/build/esp32dev
@@ -41,7 +46,6 @@ jobs:
       - name: Assemble site
         run: |
           cp web/index.html site/
-          VERSION="$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
           cat > site/manifest.json <<JSON
           {
             "name": "Bambuddy Spool Scanner",

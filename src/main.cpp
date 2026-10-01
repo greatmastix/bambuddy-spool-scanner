@@ -4,7 +4,6 @@
 // derives the tag's keys from its UID, reads the spool data and adds the spool
 // to Bambuddy's inventory unless it is already there.
 #include <Arduino.h>
-#include <WiFi.h>
 
 #include "bambuddy_client.h"
 #include "feedback.h"
@@ -18,6 +17,10 @@ namespace {
 // read many times a second: ignore the same spool for this long.
 const uint32_t SAME_SPOOL_COOLDOWN_MS = 15000;
 const uint32_t SETUP_HOLD_MS = 3000;
+
+#ifndef FIRMWARE_VERSION
+#define FIRMWARE_VERSION "dev"
+#endif
 
 std::string lastTrayUuid;
 uint32_t lastSpoolAt = 0;
@@ -36,7 +39,7 @@ void checkSetupButton() {
     if (buttonDownSince == 0) buttonDownSince = millis();
     if (millis() - buttonDownSince >= SETUP_HOLD_MS) {
       buttonDownSince = 0;
-      settings::connectWifi(true);
+      settings::openSetupPortal();
     }
   } else {
     buttonDownSince = 0;
@@ -52,10 +55,12 @@ void handleTag(const bambu::TagData& tag) {
   logSpool(tag, spool);
   feedback::busy(true);
 
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi down, reconnecting");
-    WiFi.reconnect();
-    for (int i = 0; i < 50 && WiFi.status() != WL_CONNECTED; i++) delay(100);
+  if (!settings::wifiConnected()) {
+    Serial.println("Not on WiFi yet, can't reach Bambuddy");
+    feedback::busy(false);
+    feedback::error();
+    lastTrayUuid.clear();
+    return;
   }
 
   const bambuddy::Outcome outcome = bambuddy::addSpool(spool);
@@ -88,21 +93,18 @@ void setup() {
   feedback::begin();
   pinMode(PIN_SETUP_BUTTON, INPUT_PULLUP);
 
-  settings::load();
-  settings::connectWifi(false);
-  if (settings::current.bambuddyUrl.isEmpty()) settings::connectWifi(true);
-  Serial.printf("Bambuddy: %s (API key %s)\n", settings::current.bambuddyUrl.c_str(),
-                settings::current.apiKey.length() ? "set" : "not set");
+  Serial.printf("Firmware %s\n", FIRMWARE_VERSION);
+  settings::begin(FIRMWARE_VERSION);
 
-  while (!tag_reader::begin()) {
+  if (!tag_reader::begin()) {
     Serial.println("RC522 not responding, check wiring (see docs/wiring.md)");
     feedback::error();
-    delay(2000);
   }
   Serial.println("Ready. Hold a spool or its box over the reader.");
 }
 
 void loop() {
+  settings::loop();
   checkSetupButton();
 
   bambu::TagData tag;
