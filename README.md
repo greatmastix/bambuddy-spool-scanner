@@ -31,9 +31,32 @@ after a scan, so holding a box over the reader adds it exactly once.
 
 - ESP32 DevKit (ESP32-WROOM-32)
 - RC522 (MFRC522) 13.56 MHz module
-- optional: active piezo buzzer
+- optional: active 3.3 V piezo buzzer
 
-Wiring and mounting tips: [docs/wiring.md](docs/wiring.md).
+### Wiring
+
+The RC522 runs on **3.3 V only**; connecting it to 5 V destroys it.
+
+| Part | Pin | ESP32 |
+|------|-----|-------|
+| RC522 | 3.3V | 3V3 |
+| RC522 | GND | GND |
+| RC522 | SDA | GPIO 5 |
+| RC522 | SCK | GPIO 18 |
+| RC522 | MOSI | GPIO 23 |
+| RC522 | MISO | GPIO 19 |
+| RC522 | RST | GPIO 22 |
+| RC522 | IRQ | not connected |
+| Buzzer (optional) | + | GPIO 25 |
+| Buzzer (optional) | − | GND |
+
+- The buzzer must be an **active** 3.3 V buzzer (beeps when DC is applied); a
+  passive one only clicks. It is enabled by default; GPIO 25 with nothing attached
+  is harmless.
+- Status LED: the DevKit's on-board LED on GPIO 2. Setup button: the DevKit's BOOT
+  button. Neither needs wiring.
+
+Diagram and mounting tips for reading through the box: [docs/wiring.md](docs/wiring.md).
 
 ### Will the RC522 read through the box?
 
